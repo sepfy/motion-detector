@@ -3,11 +3,19 @@
 #include <vector>
 #include <iostream>
 #include <stdio.h>
+#include "network.h"
+
 using namespace cv;
 using namespace std;
+
+Network network;
+
 int main(int, char**)
 {
-    VideoCapture cap(0);
+
+    network.load("person.net", 1);
+
+    VideoCapture cap("test.mp4");
     if (!cap.isOpened()) {
         cerr << "ERROR! Unable to open camera\n";
         return -1;
@@ -25,7 +33,7 @@ int main(int, char**)
 
 
 int dilation_elem = 2;
-int dilation_size = 20;
+int dilation_size = 10;
 int dilation_type;
   if( dilation_elem == 0 ){ dilation_type = MORPH_RECT; }
   else if( dilation_elem == 1 ){ dilation_type = MORPH_CROSS; }
@@ -33,7 +41,9 @@ int dilation_type;
   Mat element = getStructuringElement( dilation_type,
                        Size( 2*dilation_size + 1, 2*dilation_size+1 ),
                        Point( dilation_size, dilation_size ) );
-
+      
+	float *outputs, *inputs;
+	inputs = new float[32*32*3];
     for (;;)
     {
         // wait for a new frame from camera and store it into 'frame'
@@ -53,8 +63,7 @@ int dilation_type;
         }
 
         threshold(delta_frame, delta_frame, 20, 255.0, CV_THRESH_BINARY);
-        imshow("Live", delta_frame);
-        GaussianBlur(delta_frame, delta_frame, Size(3, 3), 0);
+        GaussianBlur(delta_frame, delta_frame, Size(7, 7), 0);
 
 			  dilate(delta_frame, delta_frame, element);
         vector<vector<Point> > contours;
@@ -62,13 +71,27 @@ int dilation_type;
         for(size_t i = 0; i < contours.size(); i++) {
           if(contourArea(contours[i]) > 10000) {
             Rect rect = boundingRect(contours[i]);
-            rectangle(frame, rect, Scalar(0,0,255),2,1,0);
+	    Mat roi1 = frame(rect);
+	    Mat roi = frame(rect);
+	    resize(roi, roi, Size(32, 32));
+            roi.convertTo(roi, CV_32FC1);
+            roi = (roi - 127.5)/127.5;
+	    memcpy(inputs, roi.data, 32*32*3*sizeof(float));
+	    outputs = network.inference(inputs);
+	    if(outputs[1] > 0.9)  { 
+	      //cout << outputs[0];
+	      //cout << outputs[1];
+              imshow("roi", roi1);
+              rectangle(frame, rect, Scalar(0,0,255),2,1,0);
+	    }
           }
         }
 
         count++;
-        if (waitKey(5) >= 0)
-            break;
+        imshow("Live", frame);
+	waitKey(3);
+        //if (waitKey(5) >= 0)
+        //    break;
     }
     // the camera will be deinitialized automatically in VideoCapture destructor
     return 0;
