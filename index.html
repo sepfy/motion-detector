@@ -16,16 +16,16 @@
 <nav>
 <div class="nav-wrapper blue-grey darken-4">
     <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
-  <ul id="nav-mobile" class="hide-on-med-and-down">
+    <ul id="nav-mobile" class="hide-on-med-and-down">
     <li><a href="/"><i class="material-icons left">remove_red_eye</i>Preview</a></li>
-    <li><a href="/images"><i class="material-icons left">image_search</i>Images</a></li>
+    <!--li><a href="/images"><i class="material-icons left">image_search</i>Images</a></li-->
   </ul>
 </div>
 </nav>
 
 <ul class="sidenav" id="mobile-demo">
   <li><a href="/"><i class="material-icons">remove_red_eye</i>Preview</a></li>
-  <li><a href="/images"><i class="material-icons">image_search</i> Images </a></li>
+  <!--li><a href="/images"><i class="material-icons">image_search</i> Images </a></li-->
 </ul>
 
 <script>
@@ -37,82 +37,46 @@
 
 <br>
 
+<div class="container">
 <div class="row">
   <div class="col s12 l6">
-    <canvas id="motion">
-    </canvas>
+    <img id="image" alt="Preview" height="270" width="480">
   </div>
 
   <div class="col s12 l6">
-    <canvas id="utilization">
-    </canvas>
+    <h4 id="detect"> </h4>
   </div>
-
 </div>
-
+</div>
 
 <script>
 
-var motion_data = {
-  datasets: [{
-    data: [10, 30 ,40],
-    backgroundColor: [
-      'rgba(255, 99, 132, 0.2)',
-      'rgba(54, 162, 235, 0.2)',
-      'rgba(255, 159, 64, 0.2)'
-    ],
-    label: 'Motion'
-  }],
-  labels: ["Car", "Motobike", "Pedestrian"]
+function preview(base64_image) { 
+  var image = document.getElementById('image');
+  image.src = "data:image/png;base64," + base64_image; 
 }
 
-var motion_ctx = document.getElementById("motion").getContext("2d");
-var motion = new Chart(motion_ctx, {
-  type: 'pie',
-  data: motion_data,
-  options: {
-    responsive: true
+function detect(detect_results) {
+  var str = document.getElementById('detect');
+  str.innerHTML = "";
+  for(let i = 0; i < detect_results.length; i++) {
+    str.innerHTML += "Label " + i + ": " + detect_results[i] + "<br><br>";
   }
-});
-
-
-var utilization_array = [0, 0, 0]
-var utilization_data = {
-	labels: ['CPU', 'Memory', 'Storage'],
-        datasets: [{
-            label: 'Utilization (%)',
-            data: utilization_array,
-            backgroundColor: [
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(153, 102, 255, 0.2)',
-            ],
-            borderColor: [
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-            ],
-            borderWidth: 1
-        }]
 }
 
-var utilization_ctx = document.getElementById("utilization").getContext("2d");
-var utilization = new Chart(utilization_ctx, {
-  type: 'horizontalBar',
-  data: utilization_data
-  //options: options
-});
-
-var url = 'http://' + document.domain + ':' + location.port + '/dashboard';
-var socket = io.connect(url);
-
-socket.on("update", function(msg) {
-  var obj = JSON.parse(msg);
-  //console.log(obj);
-  utilization.data.datasets[0].data = obj.utils;
-  //console.log(utilization.data.datasets);
-  utilization.update();
-});
+var socket = new WebSocket( "ws://" + document.domain + ':8000', "preview" );
+socket.onopen = function() { console.log("socket open"); }
+socket.onclose = function() { console.log("socket close"); }
+socket.onmessage = function(msg) {
+  console.log("socket message: " + msg.data);
+  var obj = JSON.parse(msg.data);
+  if(obj["detect"] !== undefined) {
+    detect(obj["detect"]);
+  }
+  else if(obj["base64"] !== undefined) {
+    preview(obj["base64"]); 
+  }
+}
 
 </script>
 

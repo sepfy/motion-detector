@@ -2,22 +2,50 @@
 #include <string.h>
 #include <stdio.h>
 #include <iostream>
+#include <vector>
+#include <string>
+#include <sys/time.h>
 #include "websockets.h"
+#include <fstream>
+
 
 #ifdef DEVEL
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
 extern VideoCapture cap;
 Mat frame;
+
+#else
+
+#include "raspicam_still.h"
+extern raspicam::RaspiCam_Still Camera;
+unsigned char *data = new unsigned char[480*270*3];
+
 #endif
 
 using namespace std;
+vector<string> labels;
+string encoded_png;
+vector<unsigned char> buf;
+unsigned char* base64_png;
+
+#define FILENAME "labels.txt"
+
+
+unsigned long long getms() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec*1.0e+3 + tv.tv_usec/1000;
+}
+
+long long prev_time = 0;
+long long curr_time = 0;
 
 string encoded_png;
 vector<uchar> buf;
 unsigned char* base64_png;
-
 
 enum protocols
 {
@@ -42,8 +70,8 @@ struct lws_protocols protocols[] =
     0,             /* max frame size / rx buffer */
   },
   {
-    "example-protocol",
-    callback_example,
+    "preview",
+    preview_callback,
     0,
     EXAMPLE_RX_BUFFER_BYTES,
   },
@@ -94,40 +122,75 @@ int callback_http( struct lws *wsi, enum lws_callback_reasons reason, void *user
 }
 
 
+int preview_callback(struct lws *wsi, enum lws_callback_reasons reason, 
+  void *user, void *in, size_t len ) {
 
-int callback_example( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len )
-{
-	switch( reason )
-	{
-		case LWS_CALLBACK_RECEIVE:
-			memcpy( &received_payload.data[LWS_SEND_BUFFER_PRE_PADDING], in, len );
-			received_payload.len = len;
-			lws_callback_on_writable_all_protocol( lws_get_context( wsi ), lws_get_protocol( wsi ) );
-			break;
+  string tmp;
+  unsigned int length;
+  switch(reason) {
 
-		case LWS_CALLBACK_SERVER_WRITEABLE:
+    case LWS_CALLBACK_RECEIVE:
+      memcpy( &received_payload.data[LWS_SEND_BUFFER_PRE_PADDING], in, len );
+      received_payload.len = len;
+      lws_callback_on_writable_all_protocol( lws_get_context( wsi ), lws_get_protocol( wsi ) );
+      break;
+
+    case LWS_CALLBACK_SERVER_WRITEABLE:
       
-			//lws_write( wsi, &received_payload.data[LWS_SEND_BUFFER_PRE_PADDING], received_payload.len, LWS_WRITE_TEXT );
-                        //imshow("frame", frame);
-                        //waitKey(1);
+      //lws_write( wsi, &received_payload.data[LWS_SEND_BUFFER_PRE_PADDING], received_payload.len, LWS_WRITE_TEXT );
 #ifdef DEVEL
       cap.read(frame);
       cv::imencode(".png", frame, buf);
       base64_png = reinterpret_cast<unsigned char*>(buf.data());
       encoded_png = base64_encode(base64_png, buf.size());
-			websocket_write_back(wsi, encoded_png.c_str(), -1);
 #else
-			websocket_write_back(wsi, "test", -1);
+      length = Camera.getImageBufferSize(); // Header + Image Data + Padding
+      if (!Camera.grab_retrieve(data, length) ) {
+        cerr<<"Error in grab"<<endl;
+        return -1;
+      }
+      encoded_png = base64_encode(data, length);
 #endif
-			break;
 
-		default:
-			break;
-	}
+      tmp = "{\"base64\":\"";
+      tmp += encoded_png;
+      tmp += "\"}";
+      websocket_write_back(wsi, tmp.c_str(), -1);
 
-	return 0;
+      curr_time = getms();
+      if((curr_time - prev_time) < 3000) break;
+
+      srand(time(NULL));
+      tmp = "{\"detect\":[";
+      for(size_t i = 0; i < labels.size(); i++) {
+        tmp += to_string((float)rand()/(RAND_MAX + 1.0));
+        if(i != labels.size() -1)
+          tmp += ",";
+      }
+
+      tmp += "]}";
+      cout << tmp << endl;
+      websocket_write_back(wsi, tmp.c_str(), -1);
+      prev_time = curr_time;
+ 
+      break;
+    default:
+      break;
+  }
+
+  return 0;
 }
 
+
+void Websockets::read_labels(void) {
+
+  ifstream file(FILENAME);
+  string s;
+  while (std::getline(file, s)) {
+    labels.push_back(s); 
+  }
+  file.close();
+}
 
 Websockets::Websockets() {
 
@@ -139,7 +202,7 @@ Websockets::Websockets() {
   info.uid = -1;
 
   context = lws_create_context(&info);
-
+  read_labels();
 }
 
 Websockets::~Websockets() {
