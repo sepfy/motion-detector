@@ -6,14 +6,13 @@
   //function update(msg) { document.getElementById("num").innerHTML = msg; }
   function update(msg) { 
     var image = document.getElementById('image');
-    image.src = "data:image/jpeg;base64,"+msg; }
+    image.src = "data:image/png;base64,"+msg; }
   socket.onopen = function() { console.log("socket open"); update("open"); }
   socket.onclose = function() { console.log("socket close"); update("closed"); }
-  socket.onmessage = function(msg) { console.log("socket message: " + msg.data);}
- //update(msg.data); }
+  socket.onmessage = function(msg) { console.log("socket message: " + msg.data);  update(msg.data); }
 </script>
 <body>
-<img id="image" src="" alt="Preview" height="640" width="480">
+<img id="image" src="" alt="Preview" height="270" width="480">
 
 <p id="num"></p>
 </body>
