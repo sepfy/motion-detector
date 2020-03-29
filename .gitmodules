@@ -1,0 +1,6 @@
+[submodule "raspicam"]
+	path = raspicam
+	url = https://github.com/cedricve/raspicam.git
+[submodule "cpp-base64"]
+	path = cpp-base64
+	url = https://github.com/ReneNyffenegger/cpp-base64.git

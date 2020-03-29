@@ -43,10 +43,6 @@ unsigned long long getms() {
 long long prev_time = 0;
 long long curr_time = 0;
 
-string encoded_png;
-vector<uchar> buf;
-unsigned char* base64_png;
-
 enum protocols
 {
   PROTOCOL_HTTP = 0,

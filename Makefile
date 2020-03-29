@@ -1,5 +1,5 @@
 
-DEVEL = 1
+DEVEL = 0
 
 SRCS = motion.cc websockets.cc cpp-base64/base64.cpp
 
