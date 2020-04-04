@@ -3,16 +3,16 @@
 #include <stdio.h>
 #include "websockets.h"
 
-using namespace std;
-
-#ifdef DEVEL
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
+using namespace std;
+
+#ifdef DEVEL
 VideoCapture cap;
 #else
-#include "raspicam_still.h"
-raspicam::RaspiCam_Still Camera;
+#include "raspicam.h"
+raspicam::RaspiCam Camera;
 #endif
 
 
@@ -25,9 +25,14 @@ int main(int, char**) {
     return -1;
   }
 #else
-  Camera.setWidth(480);
-  Camera.setHeight(270);
-  Camera.setEncoding(raspicam::RASPICAM_ENCODING_JPEG);
+  Camera.setWidth(WIDTH);
+  Camera.setHeight(HEIGHT);
+  Camera.setFrameRate(30);
+  //Camera.set(CV_CAP_PROP_FORMAT, CV_8UC3);
+  //Camera.set(CV_CAP_PROP_FRAME_WIDTH, 480);
+  //Camera.set(CV_CAP_PROP_FRAME_HEIGHT, 270);
+  //Camera.set(CV_CAP_PROP_FPS, 30);
+  //Camera.setEncoding(raspicam::RASPICAM_ENCODING_JPEG);
   Camera.open();
 #endif
   Websockets ws;

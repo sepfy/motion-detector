@@ -5,6 +5,10 @@
 #include "cpp-base64/base64.h"
 using namespace std;
 
+#define WIDTH 224
+#define HEIGHT 224
+#define CHANNEL 3
+
 #define EXAMPLE_RX_BUFFER_BYTES (10)
 
 int websocket_write_back(struct lws *wsi_in, const char *str, int str_size_in); 

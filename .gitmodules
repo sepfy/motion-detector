@@ -4,3 +4,6 @@
 [submodule "cpp-base64"]
 	path = cpp-base64
 	url = https://github.com/ReneNyffenegger/cpp-base64.git
+[submodule "libwebsockets"]
+	path = libwebsockets
+	url = https://github.com/warmcat/libwebsockets.git
