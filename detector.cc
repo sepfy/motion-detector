@@ -95,11 +95,23 @@ string Detector::GetResult() {
   return tmp;
 }
 
+int Detector::Start() {
+  bDetecting = true;
+  return true;
+}
+
+int Detector::Stop() {
+  bDetecting = false;
+  return true;
+}
+
+
 void Detector::Execute() {
 
   Mat image;
   int count = 0;
   while(true) {
+    if(!bDetecting) continue;
     mCap->Grab();
     ms_t s = getms();    
     mCap->GetFrame().copyTo(image);
@@ -119,13 +131,12 @@ void Detector::Execute() {
       }
       cout << "Class " << i << ": " << mOutput[i] << endl;
     }
-    if(max_idx == 0) {
+    if(max_idx == 10) {
       char buf[32] = {0};
       sprintf(buf, "%s/capture_%d.jpg", mDir.c_str(), count);
       mCap->Dump(buf);
       count++;
     }
-    break;
   }
 }
 

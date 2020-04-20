@@ -106,7 +106,6 @@ int preview_callback(struct lws *wsi, enum lws_callback_reasons reason,
   string encoded_jpg;
 
   switch(reason) {
-
     case LWS_CALLBACK_RECEIVE:
       //memcpy( &received_payload.data[LWS_SEND_BUFFER_PRE_PADDING], in, len );
       //received_payload.len = len;
@@ -114,22 +113,25 @@ int preview_callback(struct lws *wsi, enum lws_callback_reasons reason,
       break;
 
     case LWS_CALLBACK_SERVER_WRITEABLE:
-      
+      detector.Stop();
       //lws_write( wsi, &received_payload.data[LWS_SEND_BUFFER_PRE_PADDING], received_payload.len, LWS_WRITE_TEXT );
-      if(capturer.imageReady) {
-        encoded_jpg = capturer.GetBase64Image();
-        tmp = "{\"base64\":\"";
-        tmp += encoded_jpg;
-        tmp += "\"}";
-        websocket_write_back(wsi, tmp.c_str(), -1);
-      }
+      capturer.Grab();
+      encoded_jpg = capturer.GetBase64Image();
+      tmp = "{\"base64\":\"";
+      tmp += encoded_jpg;
+      tmp += "\"}";
+      websocket_write_back(wsi, tmp.c_str(), -1);
 
+      /*
       curr_time = clock();
       if((curr_time - prev_time)/CLOCKS_PER_SEC > 2) {
         websocket_write_back(wsi, detector.GetResult().c_str(), -1);
         prev_time = curr_time;
       }
+      */
       break;
+    case LWS_CALLBACK_CLOSED:
+      detector.Start();
     default:
       break;
 

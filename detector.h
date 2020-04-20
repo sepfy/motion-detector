@@ -21,10 +21,12 @@ class Detector {
     Detector();
     ~Detector();
     void Execute();
+    int Stop();
+    int Start();
     void Init(char *labelname, char *modelname, Capturer *cap);
     string GetResult();
   private:
-
+   int bDetecting = true;
    int FindMaxIndex(float *array, int size);
    int GetDirIndex();
    vector<string> mLabels;
