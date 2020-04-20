@@ -16,14 +16,18 @@ using namespace std;
 
 class Capturer { 
   public:
-    bool imageReady = false;
     Capturer();
     ~Capturer();
-   void grab(void);
-   string get_base64();
-   Mat get_frame();
-   void start();
-   void stop();
+
+   bool imageReady = false;
+
+   void Grab(void);
+   void Dump(char *filename);
+   string GetBase64Image();
+   Mat GetFrame();
+   void Start();
+   void Stop();
+
   private:
     bool bRunning = false;
     int width = 224;
@@ -37,7 +41,6 @@ class Capturer {
     unsigned char *data;
 #endif
 
-
-
 };
+
 

@@ -46,6 +46,12 @@ struct lws_protocols protocols[] =
     0,
     EXAMPLE_RX_BUFFER_BYTES,
   },
+  {
+    "images",
+    images_callback,
+    0,
+    16,
+  },
   { NULL, NULL, 0, 0 } /* terminator */
 };
 
@@ -111,7 +117,7 @@ int preview_callback(struct lws *wsi, enum lws_callback_reasons reason,
       
       //lws_write( wsi, &received_payload.data[LWS_SEND_BUFFER_PRE_PADDING], received_payload.len, LWS_WRITE_TEXT );
       if(capturer.imageReady) {
-        encoded_jpg = capturer.get_base64();
+        encoded_jpg = capturer.GetBase64Image();
         tmp = "{\"base64\":\"";
         tmp += encoded_jpg;
         tmp += "\"}";
@@ -120,7 +126,7 @@ int preview_callback(struct lws *wsi, enum lws_callback_reasons reason,
 
       curr_time = clock();
       if((curr_time - prev_time)/CLOCKS_PER_SEC > 2) {
-        websocket_write_back(wsi, detector.get_json_result().c_str(), -1);
+        websocket_write_back(wsi, detector.GetResult().c_str(), -1);
         prev_time = curr_time;
       }
       break;
@@ -132,6 +138,54 @@ int preview_callback(struct lws *wsi, enum lws_callback_reasons reason,
 
   return 0;
 }
+
+int images_callback(struct lws *wsi, enum lws_callback_reasons reason, 
+  void *user, void *in, size_t len ) {
+
+  char *buf;
+  struct dirent *dp;
+  DIR *fd;
+  char loc[64] = {0};
+  string ret = "{\"files\":[\"";
+  switch(reason) {
+
+    case LWS_CALLBACK_RECEIVE:
+      buf = (char*)malloc(LWS_SEND_BUFFER_PRE_PADDING + len);
+      memset(buf, 0, LWS_SEND_BUFFER_PRE_PADDING + len);
+      memcpy(buf, in, len);
+      sprintf(loc, "/var/www/html/%s", buf);
+      if ((fd = opendir(loc)) == NULL) {
+        fprintf(stderr, "listdir: can't open %s\n", loc);
+        exit(0);
+      }
+
+      while ((dp = readdir(fd)) != NULL) {
+        if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+          continue;
+        //cout << dp->d_name;
+	ret += dp->d_name;
+	ret += "\",\"";
+      }
+
+      ret += "..\"]}";
+      //cout << ret << endl;
+      free(buf);
+      websocket_write_back(wsi, ret.c_str(), -1);
+      break;
+
+    case LWS_CALLBACK_SERVER_WRITEABLE:
+      break;
+    default:
+      break;
+
+  
+  }
+
+  return 0;
+}
+
+
+
 
 
 
@@ -145,14 +199,13 @@ Websockets::Websockets() {
   info.uid = -1;
 
   context = lws_create_context(&info);
-//  read_labels();
 }
 
 Websockets::~Websockets() {
   lws_context_destroy(context);
 }
 
-void Websockets::listen(void) {
+void Websockets::Listen(void) {
   lws_service(context, 50);
 }
 

@@ -4,7 +4,7 @@ DEVEL = 1
 SRCS = motion.cc websockets.cc capturer.cc detector.cc cpp-base64/base64.cpp
 
 INCLUDE = -I target/include/ -I XNOR-Net-Core/include/ -I XNOR-Net-Core/gemmbitserial/
-LIBS = target/lib/libwebsockets.a libxnnc.a -lssl -lcrypto `pkg-config opencv --cflags --libs` -lpthread
+LIBS = target/lib/libwebsockets.a XNOR-Net-Core/libxnnc.a -lssl -lcrypto `pkg-config opencv --cflags --libs` -lpthread
 
 ifeq ($(DEVEL), 1)
     DEFINE += -D DEVEL

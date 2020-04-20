@@ -1,6 +1,5 @@
 #include "detector.h"
 
-
 Detector::Detector() {
 
 }
@@ -9,8 +8,7 @@ Detector::~Detector() {
 
 }
 
-
-void Detector::init(char *labelname, char *modelname, Capturer *cap) {
+void Detector::Init(char *labelname, char *modelname, Capturer *cap) {
 
   ifstream file(labelname);
   string s;
@@ -24,9 +22,39 @@ void Detector::init(char *labelname, char *modelname, Capturer *cap) {
   network.load(modelname, 1);
 
   mCap = cap;
+
+  string cmd = "mkdir -p " + mDir;
+  system(cmd.c_str());
+  int index = GetDirIndex();
+  mDir = mDir + "/Dumps_" + to_string(index);
+  cmd = "mkdir -p " + mDir;
+  system(cmd.c_str());
 }
 
-int Detector::find_max_index(float *array, int size) {
+int Detector::GetDirIndex() {
+
+  struct dirent *dp;
+  DIR *fd;
+  if ((fd = opendir(mDir.c_str())) == NULL) {
+    fprintf(stderr, "listdir: can't open %s\n", mDir.c_str());
+    exit(0);
+  }
+
+  int max = -1;
+  while ((dp = readdir(fd)) != NULL) {
+  if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+    continue;
+    //cout << dp->d_name << endl;
+    //Follow the rules of folder name. Dumps/Dumps_XXX
+    if(atoi(dp->d_name+6) > max)
+      max = atoi(dp->d_name+6);
+  }
+  max++;
+  return max;
+
+}
+
+int Detector::FindMaxIndex(float *array, int size) {
 
   float max = -10;
   int max_idx = -1;
@@ -41,7 +69,7 @@ int Detector::find_max_index(float *array, int size) {
 }
 
 
-string Detector::get_json_result() {
+string Detector::GetResult() {
 
   string tmp;
   int n = mLabels.size();
@@ -52,7 +80,7 @@ string Detector::get_json_result() {
 
   tmp = "{\"detect\":{";
   for(int i = 0; i < n; i++) {
-    int index = find_max_index(array, n);
+    int index = FindMaxIndex(array, n);
     tmp += "\"";
     tmp += mLabels[index];
     tmp += "\": ";
@@ -67,14 +95,14 @@ string Detector::get_json_result() {
   return tmp;
 }
 
-void Detector::execute() {
+void Detector::Execute() {
 
   Mat image;
-
+  int count = 0;
   while(true) {
-    mCap->grab();
+    mCap->Grab();
     ms_t s = getms();    
-    mCap->get_frame().copyTo(image);
+    mCap->GetFrame().copyTo(image);
 #ifdef DEVEL
     resize(image, image, Size(224, 224), 0, 0, INTER_LINEAR);
 #endif
@@ -82,7 +110,22 @@ void Detector::execute() {
     image = (image - 127.5)/127.5;
     mOutput = network.inference((float*)image.data);
     cout << "inference: " << getms() - s << endl;
+    float max = 0;
+    int max_idx = -1;
+    for(int i = 0; i < 3; i++) {
+      if(mOutput[i] > max) {
+        max = mOutput[i];
+        max_idx = i;
+      }
+      cout << "Class " << i << ": " << mOutput[i] << endl;
+    }
+    if(max_idx == 0) {
+      char buf[32] = {0};
+      sprintf(buf, "%s/capture_%d.jpg", mDir.c_str(), count);
+      mCap->Dump(buf);
+      count++;
+    }
+    break;
   }
-
 }
 

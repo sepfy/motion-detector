@@ -12,20 +12,20 @@ Detector detector;
 
 
 void *detector_thread(void *data) {
-  detector.execute();
+  detector.Execute();
 }
 
 
 int main(int, char**) {
 
-  detector.init("labels.txt", "resnet.xnor.net", &capturer);
+  detector.Init("labels.txt", "resnet.xnor.net", &capturer);
   Websockets ws;
 
   pthread_t tdetector;
   pthread_create(&tdetector, NULL, detector_thread, NULL);
 
   while(true) {
-    ws.listen();
+    ws.Listen();
   }
 
   return 0;

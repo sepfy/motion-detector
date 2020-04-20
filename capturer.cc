@@ -29,11 +29,11 @@ Capturer::~Capturer() {
 
 }
 
-Mat Capturer::get_frame() {
+Mat Capturer::GetFrame() {
   return mFrame;
 }
 
-string Capturer::get_base64() {
+string Capturer::GetBase64Image() {
   vector<unsigned char> buf;
   unsigned char* base64_jpg;
   imencode(".jpg", mFrame, buf);
@@ -41,24 +41,28 @@ string Capturer::get_base64() {
   return base64_encode(base64_jpg, buf.size());
 }
 
-void Capturer::start() {
+void Capturer::Start() {
   bRunning = true;
 }
 
-void Capturer::stop() {
+void Capturer::Stop() {
   bRunning = false;
 }
 
-void Capturer::grab() {
+void Capturer::Dump(char *filename) {
+  imwrite(filename, mFrame);
+}
+
+void Capturer::Grab() {
  
 #ifdef DEVEL
   camera.read(mFrame);
+  cvtColor(mFrame, mFrame, CV_BGR2RGB);
 #else
   camera.grab();
   //Camera.retrieve(frame);
   camera.retrieve(data, raspicam::RASPICAM_FORMAT_RGB);
   memcpy(mFrame.data, data, width*height*channel);
-  //cvtColor(frame, frame, CV_RGB2BGR);
 #endif
   imageReady = true;
 }
