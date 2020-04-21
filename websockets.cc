@@ -148,29 +148,48 @@ int images_callback(struct lws *wsi, enum lws_callback_reasons reason,
   struct dirent *dp;
   DIR *fd;
   char loc[64] = {0};
-  string ret = "{\"files\":[\"";
+  string ret = "{";
+  string dir_ret = "\"dirs\":[\"";
+  string img_ret = "\"imgs\":[";
   switch(reason) {
 
     case LWS_CALLBACK_RECEIVE:
       buf = (char*)malloc(LWS_SEND_BUFFER_PRE_PADDING + len);
       memset(buf, 0, LWS_SEND_BUFFER_PRE_PADDING + len);
       memcpy(buf, in, len);
-      sprintf(loc, "/var/www/html/%s", buf);
+      //cout << buf << endl;
+      if(strcmp(buf, "..") == 0)
+        sprintf(loc, "/var/www/html/Dumps/");
+      else
+        sprintf(loc, "/var/www/html/Dumps/%s", buf);
       if ((fd = opendir(loc)) == NULL) {
         fprintf(stderr, "listdir: can't open %s\n", loc);
-        exit(0);
+        break;
       }
 
       while ((dp = readdir(fd)) != NULL) {
         if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
           continue;
         //cout << dp->d_name;
-	ret += dp->d_name;
-	ret += "\",\"";
+	
+	if(strstr(dp->d_name, ".jpg") != NULL) {
+	  img_ret += "\"";
+	  img_ret += dp->d_name;
+	  img_ret += "\",";
+	}
+	else {
+	  dir_ret += dp->d_name;
+	  dir_ret += "\",\"";
+	}
       }
-
-      ret += "..\"]}";
-      //cout << ret << endl;
+      if(img_ret.size() > 11)
+        img_ret = img_ret.substr(0, img_ret.size()-1);
+      img_ret += "]";
+      dir_ret += "..\"]";
+      ret += img_ret;
+      ret += ",";
+      ret += dir_ret;
+      ret += "}";
       free(buf);
       websocket_write_back(wsi, ret.c_str(), -1);
       break;
