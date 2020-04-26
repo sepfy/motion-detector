@@ -1,10 +1,20 @@
 
 DEVEL = 1
 
-SRCS = motion.cc websockets.cc capturer.cc detector.cc cpp-base64/base64.cpp
+SRCS = src/motion.cc src/capturer.cc src/detector.cc src/detector_factory.cc src/detector_tvm.cc cpp-base64/base64.cpp
 
-INCLUDE = -I target/include/ -I XNOR-Net-Core/include/ -I XNOR-Net-Core/gemmbitserial/
-LIBS = target/lib/libwebsockets.a XNOR-Net-Core/libxnnc.a -lssl -lcrypto `pkg-config opencv --cflags --libs` -lpthread
+TVM_ROOT=/home/chunyu/tvm/
+DMLC_CORE=${TVM_ROOT}/3rdparty/dmlc-core
+
+TVM_FLAGS = -std=c++14 -O3 -fPIC\
+  -I${TVM_ROOT}/include\
+  -I${DMLC_CORE}/include\
+  -I${TVM_ROOT}/3rdparty/dlpack/include\
+  -L${TVM_ROOT}/build/ -ltvm_runtime
+
+
+INCLUDE = -I target/include/ -I XNOR-Net-Core/include/ -I XNOR-Net-Core/gemmbitserial/ -I./
+LIBS = target/lib/libwebsockets.a XNOR-Net-Core/libxnnc.a -lssl -lcrypto `pkg-config opencv --cflags --libs` -lpthread -lcap
 
 ifeq ($(DEVEL), 1)
     DEFINE += -D DEVEL
@@ -28,7 +38,7 @@ endif
 PROG = motion
 
 $(PROG): $(SRCS)
-	$(CXX) -o $(PROG) $(SRCS) $(DEFINE) $(INCLUDE) $(LIBS)
+	$(CXX) -std=c++11 -o $(PROG) $(SRCS) $(DEFINE) $(INCLUDE) $(LIBS) $(TVM_FLAGS)
 
 clean:
 	rm -rf $(PROG)

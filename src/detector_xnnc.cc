@@ -1,5 +1,8 @@
 #include "detector.h"
 
+using namespace std;
+using namespace cv;
+
 Detector::Detector() {
 
 }

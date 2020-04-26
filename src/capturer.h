@@ -1,6 +1,11 @@
-#include <string.h>
+#ifndef CAPTURER_H_
+#define CAPTURER_H_
+
 #include <stdio.h>
+#include <string.h>
+
 #include <iostream>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "cpp-base64/base64.h"
@@ -9,10 +14,8 @@
 #include "raspicam.h"
 #endif 
 
-using namespace cv;
 using namespace std;
-
-
+using namespace cv;
 
 class Capturer { 
   public:
@@ -43,4 +46,4 @@ class Capturer {
 
 };
 
-
+#endif  // CAPTURER_H_

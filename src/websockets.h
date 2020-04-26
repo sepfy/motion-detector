@@ -1,8 +1,13 @@
-#include <libwebsockets.h>
-#include <string.h>
+#ifndef WEBSOCKETS_H_
+#define WEBSOCKETS_H_
+
 #include <stdio.h>
+#include <string.h>
+
 #include <iostream>
-using namespace std;
+
+#include <libwebsockets.h>
+
 
 #define EXAMPLE_RX_BUFFER_BYTES (10)
 
@@ -13,13 +18,17 @@ int preview_callback( struct lws *wsi, enum lws_callback_reasons reason, void *u
 int images_callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len );
 
 class Websockets { 
-  public:
-    Websockets();
-    ~Websockets();
-   void Listen(void);
 
-  private:
-    struct lws_context_creation_info info;
-    struct lws_context *context;
+ public:
+   Websockets();
+   ~Websockets();
+  void Listen(void);
+
+ private:
+  struct lws_context_creation_info info;
+  struct lws_context *context;
+
 };
 
+
+#endif //  WEBSOCKETS_H_

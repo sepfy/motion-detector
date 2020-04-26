@@ -1,5 +1,8 @@
 #include "capturer.h"
 
+using namespace std;
+using namespace cv;
+
 
 Capturer::Capturer() {
 
