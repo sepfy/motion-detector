@@ -26,10 +26,11 @@ class DetectorTVM : public Detector{
  private:
   int LoadModel(char *modelname);
   void Detect();
-  void MatToCHW(float *data, float *input);
+  void HWCToCHW(float *data, float *input);
   tvm::runtime::PackedFunc run_;
   tvm::runtime::PackedFunc get_output_;
   tvm::runtime::Module mod_;
+  tvm::runtime::PackedFunc set_input_;
   DLTensor *x_;
   DLTensor *y_;
   

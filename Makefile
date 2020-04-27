@@ -1,20 +1,24 @@
 
 DEVEL = 1
 
-SRCS = src/motion.cc src/capturer.cc src/detector.cc src/detector_factory.cc src/detector_tvm.cc cpp-base64/base64.cpp
+OUTDIR = objs
+SRCDIR = src
 
-TVM_ROOT=/home/chunyu/tvm/
+SRC = $(wildcard $(SRCDIR)/*.cc)
+OBJS = $(addsuffix .o, $(basename $(patsubst $(SRCDIR)/%,$(OUTDIR)/%,$(SRC))))
+SRC += cpp-base64/base64.cpp
+
+
+TVM_ROOT=/home/user/tvm/
 DMLC_CORE=${TVM_ROOT}/3rdparty/dmlc-core
 
-TVM_FLAGS = -std=c++14 -O3 -fPIC\
-  -I${TVM_ROOT}/include\
-  -I${DMLC_CORE}/include\
-  -I${TVM_ROOT}/3rdparty/dlpack/include\
-  -L${TVM_ROOT}/build/ -ltvm_runtime
+#TVM_FLAGS = -std=c++14 -O3 -fPIC
+TVM_LIBS = -L${TVM_ROOT}/build/ -ltvm_runtime
+TVM_INCLUDE = -I${TVM_ROOT}/include -I${DMLC_CORE}/include -I${TVM_ROOT}/3rdparty/dlpack/include
 
+INCLUDE = -I target/include/ -I./ $(TVM_INCLUDE)
+LIBS = -L./target/lib/ -lwebsockets -lssl -lcrypto `pkg-config opencv --cflags --libs` -lpthread $(TVM_LIBS)
 
-INCLUDE = -I target/include/ -I XNOR-Net-Core/include/ -I XNOR-Net-Core/gemmbitserial/ -I./
-LIBS = target/lib/libwebsockets.a XNOR-Net-Core/libxnnc.a -lssl -lcrypto `pkg-config opencv --cflags --libs` -lpthread -lcap
 
 ifeq ($(DEVEL), 1)
     DEFINE += -D DEVEL
@@ -24,21 +28,21 @@ else
   INCLUDE += $(PI_MMAL_INC)
   LIBS += $(PI_MMAL_LIB) -lcap
 
-SRCS += raspicam/src/raspicam.cpp \
+  SRCS += raspicam/src/raspicam.cpp \
         raspicam/src/private/private_impl.cpp \
         raspicam/src/private/threadcondition.cpp
 
-
-  #DEFINE += -D TFLITE
-  #INCLUDE += -I ./tensorflow/ -I ./tensorflow/tensorflow/lite/tools/make/downloads/absl/ -I ./tensorflow/tensorflow/lite/tools/make/downloads/flatbuffers/include/
-  #LIBS += libtensorflow-lite.a -latomic
-
 endif
 
-PROG = motion
+all: $(OUTDIR) $(OBJS)
+	$(CXX) $(CXXFLAGS) $(DEFINE) $(INCLUDE) $(OBJS) $(LIBS) -o main 
 
-$(PROG): $(SRCS)
-	$(CXX) -std=c++11 -o $(PROG) $(SRCS) $(DEFINE) $(INCLUDE) $(LIBS) $(TVM_FLAGS)
+$(OUTDIR)/%.o: $(SRCDIR)/%.cc 
+	$(CXX) $(CXXFLAGS) $(DEFINE) $(INCLUDE) $(LIBS) -c $< -o $@ 
 
+$(OUTDIR):
+	mkdir -p $(OUTDIR)
+
+.PHONY: clean
 clean:
-	rm -rf $(PROG)
+	rm -rf $(OUTDIR)/*

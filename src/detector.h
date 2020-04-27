@@ -5,12 +5,10 @@
 #include <string.h>
 #include <dirent.h>
 
-#include <string>
 #include <iostream>
+#include <string>
 
 #include <opencv2/opencv.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-
 #include "capturer.h"
 
 class Detector {
@@ -21,7 +19,7 @@ class Detector {
   inline int Start() { detecting_ = true; };
   inline int Stop() { detecting_ = false; };
   void Init(char *labelname, Capturer *cap);
-  string GetResult();
+  std::string GetResult();
 
   float *input_;
   float *output_;
@@ -36,8 +34,8 @@ class Detector {
   int kHeight = 224;
   int kChannel = 3;
   Capturer *capturer_;
-  string storage_dir_ = "Dumps";
-  vector<string> labels_;
+  std::string storage_dir_ = "Dumps";
+  std::vector<std::string> labels_;
   float detecting_ = true;
 };
 

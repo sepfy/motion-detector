@@ -11,8 +11,8 @@
 
 using namespace std;
 
-extern Capturer capturer;
-extern Detector detector;
+extern Capturer *g_capturer;
+extern Detector *g_detector;
 
 clock_t curr_time = 0;
 clock_t prev_time = 0;
@@ -113,10 +113,10 @@ int preview_callback(struct lws *wsi, enum lws_callback_reasons reason,
       break;
 
     case LWS_CALLBACK_SERVER_WRITEABLE:
-      detector.Stop();
+      g_detector->Stop();
       //lws_write( wsi, &received_payload.data[LWS_SEND_BUFFER_PRE_PADDING], received_payload.len, LWS_WRITE_TEXT );
-      capturer.Grab();
-      encoded_jpg = capturer.GetBase64Image();
+      g_capturer->Grab();
+      encoded_jpg = g_capturer->GetBase64Image();
       tmp = "{\"base64\":\"";
       tmp += encoded_jpg;
       tmp += "\"}";
@@ -131,7 +131,7 @@ int preview_callback(struct lws *wsi, enum lws_callback_reasons reason,
       */
       break;
     case LWS_CALLBACK_CLOSED:
-      detector.Start();
+      g_detector->Start();
     default:
       break;
 

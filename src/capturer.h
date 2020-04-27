@@ -14,34 +14,26 @@
 #include "raspicam.h"
 #endif 
 
-using namespace std;
-using namespace cv;
-
 class Capturer { 
-  public:
-    Capturer();
-    ~Capturer();
+ public:
+  Capturer();
+  ~Capturer();
 
-   bool imageReady = false;
+ void Grab(void);
+ void Dump(char *filename);
+ std::string GetBase64Image();
+ cv::Mat GetFrame();
 
-   void Grab(void);
-   void Dump(char *filename);
-   string GetBase64Image();
-   Mat GetFrame();
-   void Start();
-   void Stop();
-
-  private:
-    bool bRunning = false;
-    int width = 224;
-    int height = 224;
-    int channel = 3;
-    Mat mFrame;
+ private:
+  int width = 224;
+  int height = 224;
+  int channel = 3;
+  cv::Mat frame_;
 #ifdef DEVEL
-    VideoCapture camera;
+  cv::VideoCapture camera_;
 #else
-    raspicam::RaspiCam camera;
-    unsigned char *data;
+  raspicam::RaspiCam camera_;
+  unsigned char *data;
 #endif
 
 };

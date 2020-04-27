@@ -94,7 +94,8 @@ string Detector::GetResult() {
 void Detector::Preprocess(cv::Mat image) {
 
 #ifdef DEVEL
-    resize(image, image, Size(224, 224), 0, 0, INTER_LINEAR);
+    cv::resize(image, image, Size(224, 224), 0, 0, INTER_LINEAR);
+    cv::cvtColor(image, image, CV_BGR2RGB);
 #endif
     image.convertTo(image, CV_32FC3);
     memcpy(input_, image.data, kWidth*kHeight*kChannel*sizeof(float));
@@ -107,19 +108,18 @@ int Detector::ArgmaxOutput() {
 
 void Detector::Execute() {
 
-  Mat image;
+  cv::Mat image;
   int count = 0;
 
   while(true) {
     if(!detecting_)
       continue;
-    capturer_->Grab();
     capturer_->GetFrame().copyTo(image);
     Preprocess(image);
     Detect();
 
     int best = ArgmaxOutput();
-    std::cout << best << endl;
+    std::cout << labels_[best] << endl;
     if(best == -1) {
       char buf[32] = {0};
       sprintf(buf, "%s/capture_%d.jpg", storage_dir_.c_str(), count);
