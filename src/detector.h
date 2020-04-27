@@ -16,8 +16,8 @@ class Detector {
   virtual int LoadModel(char *modelname) = 0;
   virtual void Detect() = 0;
   void Execute();
-  inline int Start() { detecting_ = true; };
-  inline int Stop() { detecting_ = false; };
+  inline void Start() { detecting_ = true; };
+  inline void Stop() { detecting_ = false; };
   void Init(char *labelname, Capturer *cap);
   std::string GetResult();
 

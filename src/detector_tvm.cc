@@ -52,7 +52,7 @@ int DetectorTVM::LoadModel(char *modelname) {
   run_ = mod_.GetFunction("run");
   get_output_ = mod_.GetFunction("get_output");
   std::cout << "Load model successfully" << std::endl;
-
+  return 1;
 }
 
 void DetectorTVM::HWCToCHW(float *data, float *input) {

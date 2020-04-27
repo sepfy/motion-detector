@@ -6,18 +6,19 @@ SRCDIR = src
 
 SRC = $(wildcard $(SRCDIR)/*.cc)
 OBJS = $(addsuffix .o, $(basename $(patsubst $(SRCDIR)/%,$(OUTDIR)/%,$(SRC))))
-SRC += cpp-base64/base64.cpp
+
+THIRD_PARTS_SRC = cpp-base64/base64.cpp
 
 
-TVM_ROOT=/home/user/tvm/
+TVM_ROOT=./tvm/
 DMLC_CORE=${TVM_ROOT}/3rdparty/dmlc-core
 
 #TVM_FLAGS = -std=c++14 -O3 -fPIC
 TVM_LIBS = -L${TVM_ROOT}/build/ -ltvm_runtime
 TVM_INCLUDE = -I${TVM_ROOT}/include -I${DMLC_CORE}/include -I${TVM_ROOT}/3rdparty/dlpack/include
 
-INCLUDE = -I target/include/ -I./ $(TVM_INCLUDE)
-LIBS = -L./target/lib/ -lwebsockets -lssl -lcrypto `pkg-config opencv --cflags --libs` -lpthread $(TVM_LIBS)
+INCLUDE = -I./libwebsockets/build/include/ -I./ $(TVM_INCLUDE)
+LIBS = -L./libwebsockets/build/lib/ -lwebsockets -lssl -lcrypto `pkg-config opencv --cflags --libs` -lpthread $(TVM_LIBS)
 
 
 ifeq ($(DEVEL), 1)
@@ -28,14 +29,15 @@ else
   INCLUDE += $(PI_MMAL_INC)
   LIBS += $(PI_MMAL_LIB) -lcap
 
-  SRCS += raspicam/src/raspicam.cpp \
-        raspicam/src/private/private_impl.cpp \
-        raspicam/src/private/threadcondition.cpp
+  THIRD_PARTS_SRC += raspicam/src/raspicam.cpp \
+         raspicam/src/private/private_impl.cpp \
+         raspicam/src/private/threadcondition.cpp
 
 endif
 
+
 all: $(OUTDIR) $(OBJS)
-	$(CXX) $(CXXFLAGS) $(DEFINE) $(INCLUDE) $(OBJS) $(LIBS) -o main 
+	$(CXX) $(CXXFLAGS) $(DEFINE) $(INCLUDE) $(OBJS) $(LIBS) $(THIRD_PARTS_SRC) -o main 
 
 $(OUTDIR)/%.o: $(SRCDIR)/%.cc 
 	$(CXX) $(CXXFLAGS) $(DEFINE) $(INCLUDE) $(LIBS) -c $< -o $@ 
