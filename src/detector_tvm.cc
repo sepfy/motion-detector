@@ -11,8 +11,9 @@ DetectorTVM::~DetectorTVM() {
 int DetectorTVM::LoadModel(char *modelname) {
 
   std::string modelfile(modelname);
-  tvm::runtime::Module mod_dylib =
-  tvm::runtime::Module::LoadFromFile(modelfile + ".so");
+  tvm::runtime::Module mod_dylib = 
+	  (*tvm::runtime::Registry::Get("module._GetSystemLib"))();
+          //tvm::runtime::Module::LoadFromFile(modelfile + ".so");
 
   std::ifstream json_in(modelfile + ".json", std::ios::in);
   std::string json_data((std::istreambuf_iterator<char>(json_in)), std::istreambuf_iterator<char>());
